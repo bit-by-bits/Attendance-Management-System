@@ -50,7 +50,9 @@ const App = () => {
     <Card
       bordered={false}
       title={
-        <div style={{ color: "red", fontWeight: 700 }}>Authentication Form</div>
+        <div style={{ color: "red", fontWeight: 700, fontSize: 18 }}>
+          Authentication Form
+        </div>
       }
     >
       <Form

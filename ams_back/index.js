@@ -11,6 +11,20 @@ const db = mysql.createPool({
   user: "root",
   password: "prateek.pk12",
   database: "ams_db",
+  port: 3306,
+});
+
+// Attempt to catch disconnects
+db.on("connection", (connection) => {
+  console.log("DB Connection established");
+
+  connection.on("error", (err) =>
+    console.error(new Date(), " MySQL error ", err.code)
+  );
+
+  connection.on("close", (err) =>
+    console.error(new Date(), " MySQL close ", err)
+  );
 });
 
 app.use(cors());
@@ -32,7 +46,7 @@ app.get("/api/initiate", (req, res) => {
   db.query(sqlUseDB, (e, r) => e && console.log("\nsqlUseDB: " + e.sqlMessage));
 
   const sqlCreateAdminTable =
-    "CREATE TABLE IF NOT EXISTS Admin(Password VARCHAR(20) NOT NULL, First_Name VARCHAR(20) NOT NULL, Last_Name VARCHAR(20) NOT NULL, Middle_Name VARCHAR(20) NOT NULL, Admin_ID VARCHAR(20) NOT NULL, Email VARCHAR(30) NOT NULL, Phone_No VARCHAR(10) NOT NULL, PRIMARY KEY (Admin_ID), UNIQUE (Email));";
+    "CREATE TABLE IF NOT EXISTS Admin(Password VARCHAR(20) NOT NULL, First_Name VARCHAR(20) NOT NULL, Last_Name VARCHAR(20) NOT NULL, Middle_Name VARCHAR(20) NOT NULL, Admin_ID VARCHAR(30) NOT NULL, Email VARCHAR(30) NOT NULL, Phone_No VARCHAR(10) NOT NULL, PRIMARY KEY (Admin_ID), UNIQUE (Email));";
   db.query(
     sqlCreateAdminTable,
     (e, r) => e && console.log("\nsqlCreateAdminTable: " + e.sqlMessage)
@@ -42,7 +56,7 @@ app.get("/api/initiate", (req, res) => {
     "CREATE TABLE IF NOT EXISTS Teaching_Staff(Middle_Name VARCHAR(20) NOT NULL, Last_Name VARCHAR(20) NOT NULL, First_Name VARCHAR(20) NOT NULL, Employee_ID VARCHAR(30) NOT NULL, Password VARCHAR(30) NOT NULL, Email VARCHAR(30) NOT NULL, Phone_No VARCHAR(10) NOT NULL, PRIMARY KEY (Employee_ID), UNIQUE (Email));";
   db.query(
     sqlCreateTeachingStaffTable,
-    (e, r) => e && console.log("  \n: " + e.sqlMessage)
+    (e, r) => e && console.log("\nsqlCreateTeachingStaffTable: " + e.sqlMessage)
   );
 
   const sqlCreateCourseTable =
@@ -70,7 +84,8 @@ app.get("/api/initiate", (req, res) => {
     "CREATE TABLE IF NOT EXISTS Teacher_Att_Record(Status VARCHAR(10) NOT NULL, Takes_ID VARCHAR(30) NOT NULL, Date DATE NOT NULL, PRIMARY KEY (Takes_ID, Date), FOREIGN KEY (Takes_ID) REFERENCES Takes(Takes_ID), FOREIGN KEY (Date) REFERENCES Date_Table(Date));";
   db.query(
     sqlCreateTeacherAttRecordTable,
-    (e, r) => e && console.log("  \n: " + e.sqlMessage)
+    (e, r) =>
+      e && console.log("\nsqlCreateTeacherAttRecordTable: " + e.sqlMessage)
   );
 
   const sqlCreateCityInStateTable =
@@ -81,7 +96,7 @@ app.get("/api/initiate", (req, res) => {
   );
 
   const sqlCreateStudentTable =
-    "CREATE TABLE IF NOT EXISTS Student(House VARCHAR(30) NOT NULL, First_Name VARCHAR(30) NOT NULL, Middle_Name VARCHAR(30) NOT NULL, Last_Name VARCHAR(30) NOT NULL, Student_ID VARCHAR(30) NOT NULL, Email VARCHAR(30) NOT NULL, Password VARCHAR(30) NOT NULL, Phone_No VARCHAR(10) NOT NULL, City VARCHAR(30) NOT NULL, PRIMARY KEY (Student_ID), FOREIGN KEY (City) REFERENCES City_In_State(City), UNIQUE (Email));";
+    "CREATE TABLE IF NOT EXISTS Student(House VARCHAR(30) NOT NULL, First_Name VARCHAR(20) NOT NULL, Middle_Name VARCHAR(20) NOT NULL, Last_Name VARCHAR(20) NOT NULL, Student_ID VARCHAR(30) NOT NULL, Email VARCHAR(30) NOT NULL, Password VARCHAR(30) NOT NULL, Phone_No VARCHAR(10) NOT NULL, City VARCHAR(30) NOT NULL, PRIMARY KEY (Student_ID), FOREIGN KEY (City) REFERENCES City_In_State(City), UNIQUE (Email));";
   db.query(
     sqlCreateStudentTable,
     (e, r) => e && console.log("\nsqlCreateStudentTable: " + e.sqlMessage)
@@ -150,6 +165,43 @@ app.get("/api/initiate", (req, res) => {
     sqlInsertTakes,
     (e, r) => e && console.log("\nsqlInsertTakes: " + e.sqlMessage)
   );
+
+  const sqlInsertDateTable =
+    "INSERT IGNORE INTO Date_Table (Date) VALUES ('2023-04-04'), ('2023-04-05'), ('2023-04-06'), ('2023-04-07'), ('2023-04-08'), ('2023-04-09'), ('2023-04-10');";
+  db.query(
+    sqlInsertDateTable,
+    (e, r) => e && console.log("\nsqlInsertDateTable: " + e.sqlMessage)
+  );
+
+  const sqlInsertEnrollment =
+    "INSERT IGNORE INTO Enrollment (Enroll_ID, Student_ID, Course_ID) VALUES ('E01', 'S1', 'C01'), ('E02', 'S2', 'C01'), ('E03', 'S3', 'C02'), ('E04', 'S4', 'C02'), ('E05', 'S5', 'C03'), ('E06', 'S6',  'C04'), ('E07', 'S7', 'C05'), ('E08', 'S8', 'C06'), ('E09', 'S9', 'C07'), ('E10', 'S10', 'C08');";
+  db.query(
+    sqlInsertEnrollment,
+    (e, r) => e && console.log("\nsqlInsertEnrollment: " + e.sqlMessage)
+  );
+
+  const sqlInsertPermission = `INSERT IGNORE INTO Permission (Student_ID, Course_ID, Date, Status) SELECT e.Student_ID, e.Course_ID, sar.Date, CASE WHEN sar.Status = "ABSENTWP" THEN "ACCEPTED" WHEN sar.Status = "ABSENTWOP" THEN "REJECTED" END AS Status FROM Enrollment e JOIN Student_Att_Record sar ON e.Enroll_ID = sar.Enroll_ID WHERE sar.Status IN ("ABSENTWP", "ABSENTWOP");`;
+  db.query(
+    sqlInsertPermission,
+    (e, r) => e && console.log("\nsqlInsertPermission: " + e.sqlMessage)
+  );
+
+  const sqlInsertStudentAttendanceRecord =
+    "INSERT IGNORE INTO Student_Att_Record (Enroll_ID, Date, Status) SELECT e.Enroll_ID, dt.Date, CASE WHEN RAND() < 0.75 THEN 'PRESENT' WHEN RAND() < 0.875 THEN 'ABSENTWP' ELSE 'ABSENTWOP' END AS Status FROM Date_Table dt CROSS JOIN Enrollment e ORDER BY dt.Date, e.Enroll_ID;";
+  db.query(
+    sqlInsertStudentAttendanceRecord,
+    (e, r) =>
+      e && console.log("\nsqlInsertStudentAttendanceRecord: " + e.sqlMessage)
+  );
+
+  const sqlInsertTeachingStaffAttendanceRecord =
+    "INSERT IGNORE INTO Teacher_Att_Record (Takes_ID, Date, Status) SELECT t.Takes_ID, dt.Date, CASE WHEN RAND() < 0.85 THEN 'PRESENT' ELSE 'ABSENT' END AS Status FROM Date_Table dt CROSS JOIN Takes t ORDER BY dt.Date, t.Takes_ID;";
+  db.query(
+    sqlInsertTeachingStaffAttendanceRecord,
+    (e, r) =>
+      e &&
+      console.log("\nsqlInsertTeachingStaffAttendanceRecord: " + e.sqlMessage)
+  );
 });
 
 app.post("/api/login", (req, res) => {
@@ -180,12 +232,48 @@ app.post("/api/login", (req, res) => {
     else res.status(404).send({ error: err });
   });
 });
- 
+
 app.get("/api/getAttendance", (req, res) => {
   const ID = req.query.id;
-  console.log(ID);
+  console.log("Student Selected: " + ID);
 
-  const sqlSelect = `SELECT E.Course_ID, C.Name , S.Date, S.Status FROM student_att_record S JOIN Enrollemnt E on S.Enroll_ID = E.Enroll_ID JOIN Course C on E.Course_ID = C.Course_ID WHERE E.Student_ID = ${ID} AND S.Date BETWEEN  DATE_ADD(day, -7, CURRENT_DATE()) AND CURRENT_DATE() ORDER BY E.Course_ID;`;
+  const sqlSelect =
+    "SELECT E.Course_ID, C.Name , S.Date, S.Status FROM student_att_record S JOIN Enrollment E on S.Enroll_ID = E.Enroll_ID JOIN Course C on E.Course_ID = C.Course_ID WHERE E.Student_ID = ? AND S.Date BETWEEN  DATE_ADD(current_date(), INTERVAL -7 DAY) AND CURRENT_DATE() ORDER BY E.Course_ID;";
+
+  db.query(sqlSelect, [ID], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getCourses", (req, res) => {
+  const ID = req.query.id;
+  console.log("Teacher Selected: " + ID);
+
+  const sqlSelect =
+    "SELECT t.Course_ID, c.Name FROM Takes t JOIN Course c ON c.Course_ID = t.Course_ID Where Employee_ID = ?;";
+
+  db.query(sqlSelect, [ID], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.post("/api/getClassAttendance", (req, res) => {
+  const CID = req.body.course;
+  const DATE = req.body.date;
+
+  const sqlSelect =
+    "SELECT Enrollment.Student_ID, Student.First_Name, Student.Middle_Name, Student.Last_Name, Student_Att_Record.Status FROM Enrollment INNER JOIN Student_Att_Record ON Enrollment.Enroll_ID = Student_Att_Record.Enroll_ID INNER JOIN Student ON Enrollment.Student_ID = Student.Student_ID WHERE Enrollment.Course_ID = ? AND Student_Att_Record.Date = ?;";
+
+  db.query(sqlSelect, [CID, DATE], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getAllCourses", (req, res) => {
+  const sqlSelect = "SELECT Course_ID, Name FROM Course c;";
 
   db.query(sqlSelect, (err, result) => {
     if (result?.length) res.send(result);
