@@ -44,7 +44,7 @@ const App = () => {
       });
   };
 
-  const onFinishFailed = errorInfo => message.error("Something went wrong!");
+  const onFinishFailed = errorInfo => message.error("Form not filled");
 
   return (
     <Card
@@ -101,7 +101,7 @@ const App = () => {
             },
           ]}
         >
-          <Select
+          <Select showSearch 
             options={[
               { label: "Student", value: "student" },
               { label: "Teacher", value: "teacher" },

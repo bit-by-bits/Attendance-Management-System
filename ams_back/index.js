@@ -9,9 +9,9 @@ const port = 3001;
 const db = mysql.createPool({
   host: "localhost",
   user: "root",
-  password: "prateek.pk12",
+  password: "password",
   database: "ams_db",
-  port: 3306,
+  timezone: "ist",
 });
 
 // Attempt to catch disconnects
@@ -110,7 +110,7 @@ app.get("/api/initiate", (req, res) => {
   );
 
   const sqlCreatePermissionTable =
-    "CREATE TABLE IF NOT EXISTS Permission(Date DATE NOT NULL, Status VARCHAR(20) NOT NULL, Student_ID VARCHAR(30) NOT NULL, Course_ID VARCHAR(30) NOT NULL, PRIMARY KEY (Student_ID, Course_ID), FOREIGN KEY (Student_ID) REFERENCES Student(Student_ID), FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID));";
+    "CREATE TABLE IF NOT EXISTS Permission(Date DATE NOT NULL, Status VARCHAR(20) NOT NULL, Student_ID VARCHAR(30) NOT NULL, Course_ID VARCHAR(30) NOT NULL, PRIMARY KEY (Student_ID, Course_ID, Date), FOREIGN KEY (Student_ID) REFERENCES Student(Student_ID), FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID));";
   db.query(
     sqlCreatePermissionTable,
     (e, r) => e && console.log("\nsqlCreatePermissionTable: " + e.sqlMessage)
@@ -235,7 +235,6 @@ app.post("/api/login", (req, res) => {
 
 app.get("/api/getAttendance", (req, res) => {
   const ID = req.query.id;
-  console.log("Student Selected: " + ID);
 
   const sqlSelect =
     "SELECT E.Course_ID, C.Name , S.Date, S.Status FROM student_att_record S JOIN Enrollment E on S.Enroll_ID = E.Enroll_ID JOIN Course C on E.Course_ID = C.Course_ID WHERE E.Student_ID = ? AND S.Date BETWEEN  DATE_ADD(current_date(), INTERVAL -7 DAY) AND CURRENT_DATE() ORDER BY E.Course_ID;";
@@ -246,9 +245,35 @@ app.get("/api/getAttendance", (req, res) => {
   });
 });
 
+app.get("/api/getStudentProfile", (req, res) => {
+  const ID = req.query.id;
+
+  const sqlSelect1 =
+    "SELECT cin.State FROM City_In_State cin JOIN Student s ON cin.City = s.City WHERE s.Student_ID = ?;";
+  db.query(sqlSelect1, [ID], (err1, result1) => {
+    if (result1?.length) {
+      const sqlSelect2 = "SELECT * FROM Student WHERE Student_ID = ?;";
+      db.query(sqlSelect2, [ID], (err2, result2) => {
+        if (result2?.length) res.send([result1[0], result2[0]]);
+        else res.status(404).send({ error: err2 });
+      });
+    } else res.status(404).send({ error: err1 });
+  });
+});
+
+app.get("/api/getTeacherProfile", (req, res) => {
+  const ID = req.query.id;
+
+  const sqlSelect1 = "SELECT * FROM Teaching_Staff WHERE Employee_ID = ?;";
+
+  db.query(sqlSelect1, [ID], (err, result) => {
+    if (result?.length) res.send(result[0]);
+    else res.status(404).send({ error: err });
+  });
+});
+
 app.get("/api/getCourses", (req, res) => {
   const ID = req.query.id;
-  console.log("Teacher Selected: " + ID);
 
   const sqlSelect =
     "SELECT t.Course_ID, c.Name FROM Takes t JOIN Course c ON c.Course_ID = t.Course_ID Where Employee_ID = ?;";
@@ -256,6 +281,232 @@ app.get("/api/getCourses", (req, res) => {
   db.query(sqlSelect, [ID], (err, result) => {
     if (result?.length) res.send(result);
     else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getCourseStudents", (req, res) => {
+  const TID = req.query.tid;
+  const CID = req.query.cid;
+
+  const sqlSelect =
+    "SELECT E.Student_ID, S.First_Name, S.Middle_Name, S.Last_Name FROM Enrollment E JOIN Takes T ON E.Course_ID = T.Course_ID JOIN Student S ON E.Student_ID = S.Student_ID WHERE T.Employee_ID = ? AND E.Course_ID = ?";
+
+  db.query(sqlSelect, [TID, CID], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getEnrollments", (req, res) => {
+  const ID = req.query.id;
+
+  const sqlSelect =
+    "SELECT c.Course_ID, c.Name, CONCAT(ts.First_Name, ' ', ts.Middle_Name, ' ', ts.Last_Name) as Teacher FROM Enrollment e JOIN Course c ON c.Course_ID = e.Course_ID  JOIN Takes t ON e.Course_ID = t.Course_ID JOIN Teaching_Staff ts ON ts.Employee_ID = t.Employee_ID WHERE E.Student_ID = ?;";
+
+  db.query(sqlSelect, [ID], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.post("/api/updateStudentProfile1", (req, res) => {
+  const CITY = req.body.city;
+  const STATE = req.body.state;
+
+  const sqlUpdate =
+    "INSERT IGNORE INTO City_In_State(City, State) VALUE(?, ?);";
+
+  db.query(sqlUpdate, [CITY, STATE], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/updateStudentProfile2", (req, res) => {
+  const ID = req.body.id;
+  const FIRST = req.body.first;
+  const MIDDLE = req.body.middle;
+  const LAST = req.body.last;
+  const EMAIL = req.body.email;
+  const PASS = req.body.password;
+  const PHONE = req.body.phone;
+  const HOUSE = req.body.house;
+  const CITY = req.body.city;
+
+  const sqlUpdate =
+    "UPDATE Student SET First_Name = ?, Middle_Name = ?, Last_Name = ?, Email = ?, Password = ?, Phone_No = ?, House = ?, City = ? WHERE Student_ID = ?;";
+
+  db.query(
+    sqlUpdate,
+    [FIRST, MIDDLE, LAST, EMAIL, PASS, PHONE, HOUSE, CITY, ID],
+    (err, result) => {
+      if (err) res.status(404).send({ error: err });
+      else res.send(result);
+    }
+  );
+});
+
+app.post("/api/updateTeacherProfile", (req, res) => {
+  const ID = req.body.id;
+  const FIRST = req.body.first;
+  const MIDDLE = req.body.middle;
+  const LAST = req.body.last;
+  const EMAIL = req.body.email;
+  const PASS = req.body.password;
+  const PHONE = req.body.phone;
+
+  const sqlUpdate =
+    "UPDATE Teaching_Staff SET First_Name = ?, Middle_Name = ?, Last_Name = ?, Email = ?, Password = ?, Phone_No = ? WHERE Employee_ID = ?;";
+
+  db.query(
+    sqlUpdate,
+    [FIRST, MIDDLE, LAST, EMAIL, PASS, PHONE, ID],
+    (err, result) => {
+      if (err) res.status(404).send({ error: err });
+      else res.send(result);
+    }
+  );
+});
+
+app.post("/api/applyLeave1", (req, res) => {
+  const DATE = req.body.date;
+
+  const sqlInsert = "INSERT IGNORE INTO Date_Table (Date) VALUES (?);";
+
+  db.query(sqlInsert, [DATE], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/applyLeave2", (req, res) => {
+  const SID = req.body.id;
+  const CID = req.body.course;
+  const DATE = req.body.date;
+
+  const sqlInsert =
+    "INSERT INTO Permission (Status, Date, Student_ID, Course_ID) VALUE('PENDING', ?, ?, ?);";
+
+  db.query(sqlInsert, [DATE, SID, CID], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.get("/api/getApplications", (req, res) => {
+  const ID = req.query.id;
+
+  const sqlSelect =
+    "SELECT P.Student_ID, S.First_Name, S.Middle_Name, S.Last_Name, P.Date, P.Status FROM Permission P JOIN Student S ON P.Student_ID = S.Student_ID WHERE P.Status = 'PENDING' AND P.Course_ID = ?";
+
+  db.query(sqlSelect, [ID], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.post("/api/acceptApplication", (req, res) => {
+  const SID = req.body.sid;
+  const CID = req.body.cid;
+  const DATE = req.body.date;
+
+  const sqlUpdate =
+    "UPDATE Permission SET Status = 'ACCEPTED' WHERE Student_ID = ? AND Course_ID = ? AND Date = ?;";
+
+  db.query(sqlUpdate, [SID, CID, DATE], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/rejectApplication", (req, res) => {
+  const SID = req.body.sid;
+  const CID = req.body.cid;
+  const DATE = req.body.date;
+
+  const sqlUpdate =
+    "UPDATE Permission SET Status = 'REJECTED' WHERE Student_ID = ? AND Course_ID = ? AND Date = ?;";
+
+  db.query(sqlUpdate, [SID, CID, DATE], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/markStudentAttendance1", (req, res) => {
+  const DATE = req.body.date;
+
+  const sqlInsert = "INSERT IGNORE INTO Date_Table (Date) VALUES (?);";
+
+  db.query(sqlInsert, [DATE], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/markStudentAttendance2", (req, res) => {
+  const SID = req.body.sid;
+  const CID = req.body.cid;
+  const DATE = req.body.date;
+  const STATUS = req.body.status;
+
+  if (STATUS === "PRESENT") {
+    const sqlInsert =
+      "INSERT INTO Student_Att_Record (Enroll_ID, Date, Status) SELECT Enrollment.Enroll_ID, ?, 'PRESENT' FROM Enrollment WHERE Enrollment.Student_ID = ? AND Enrollment.Course_ID = ? AND NOT EXISTS (SELECT * FROM Student_Att_Record WHERE Student_Att_Record.Enroll_ID = Enrollment.Enroll_ID AND Student_Att_Record.Date = ?);";
+
+    db.query(sqlInsert, [DATE, SID, CID, DATE], (err, result) => {
+      if (err) res.status(404).send({ error: err });
+      else res.send(result);
+    });
+  } else {
+    const sqlInsert =
+      "INSERT IGNORE INTO Student_Att_Record (Enroll_ID, Date, Status) SELECT E.Enroll_ID, ?, CASE WHEN P.Status IN ('ACCEPTED') THEN 'ABSENTWP' ELSE 'ABSENTWOP' END FROM Enrollment E JOIN Permission P ON E.Student_ID = P.Student_ID AND E.Course_ID = P.Course_ID AND P.Date = ? WHERE E.Student_ID = ? AND E.Course_ID = ?;";
+
+    db.query(sqlInsert, [DATE, DATE, SID, CID], (err, result) => {
+      if (err) res.status(404).send({ error: err });
+      else res.send(result);
+    });
+  }
+});
+
+app.post("/api/markTeacherAttendance2", (req, res) => {
+  const EID = req.body.eid;
+  const CID = req.body.cid;
+  const DATE = req.body.date;
+  const STATUS = req.body.status;
+
+  const sqlInsert =
+    "INSERT INTO Teacher_Att_Record(Status, Takes_ID, Date) SELECT ?, T.Takes_ID, ? FROM Takes AS T WHERE T.Employee_ID = ? AND T.Course_ID = ?;";
+
+  db.query(sqlInsert, [STATUS, DATE, EID, CID], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/markTeacherAttendance1", (req, res) => {
+  const DATE = req.body.date;
+
+  const sqlInsert = "INSERT IGNORE INTO Date_Table (Date) VALUES (?);";
+
+  db.query(sqlInsert, [DATE], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/markTeacherAttendance2", (req, res) => {
+  const EID = req.body.eid;
+  const CID = req.body.cid;
+  const DATE = req.body.date;
+  const STATUS = req.body.status;
+
+  const sqlInsert =
+    "INSERT INTO Teacher_Att_Record(Status, Takes_ID, Date) SELECT ?, T.Takes_ID, ? FROM Takes AS T WHERE T.Employee_ID = ? AND T.Course_ID = ?;";
+
+  db.query(sqlInsert, [STATUS, DATE, EID, CID], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
   });
 });
 
@@ -272,10 +523,180 @@ app.post("/api/getClassAttendance", (req, res) => {
   });
 });
 
+app.post("/api/getTeacherAttendance", (req, res) => {
+  const DATE = req.body.date;
+
+  const sqlSelect =
+    "SELECT ts.Employee_ID, ts.First_Name, ts.Middle_Name, ts.Last_name, tar.Status FROM Teacher_Att_Record tar JOIN Takes t ON tar.Takes_ID = t.Takes_ID JOIN Teaching_staff ts ON t.Employee_ID = ts.Employee_ID WHERE Date = ?;";
+
+  db.query(sqlSelect, [DATE], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
 app.get("/api/getAllCourses", (req, res) => {
   const sqlSelect = "SELECT Course_ID, Name FROM Course c;";
 
   db.query(sqlSelect, (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getAllTeachers", (req, res) => {
+  const sqlSelect =
+    "SELECT t.Takes_ID, t.Employee_ID,  ts.First_Name, ts.Middle_Name, ts.Last_Name, c.Course_ID, c.Name FROM Takes t JOIN Teaching_Staff ts ON t.Employee_ID = ts.Employee_ID JOIN Course c ON t.Course_ID = c.Course_ID";
+
+  db.query(sqlSelect, (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.post("/api/addStudent1", (req, res) => {
+  const CITY = req.body.city;
+  const STATE = req.body.state;
+
+  const sqlInsert1 =
+    "INSERT IGNORE INTO City_In_State (City, State) VALUES (?, ?);";
+
+  db.query(sqlInsert1, [CITY, STATE], (err, result) => {
+    if (err) res.status(404).send({ error: err });
+    else res.send(result);
+  });
+});
+
+app.post("/api/addStudent2", (req, res) => {
+  const ID = req.body.id;
+  const EMAIL = req.body.email;
+  const FIRST = req.body.first;
+  const MID = req.body.middle;
+  const LAST = req.body.last;
+  const PASS = req.body.password;
+  const PHONE = req.body.phone;
+  const HOUSE = req.body.house;
+  const CITY = req.body.city;
+  const STATE = req.body.state;
+
+  const sqlInsert1 =
+    "INSERT INTO Student (House, First_Name, Middle_Name, Last_Name, Student_ID, Email, Password, Phone_No, City) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+
+  db.query(
+    sqlInsert1,
+    [HOUSE, FIRST, MID, LAST, ID, EMAIL, PASS, PHONE, CITY],
+    (err, result) => {
+      if (err) res.status(404).send({ error: err });
+      else res.send(result);
+    }
+  );
+});
+
+app.post("/api/addTeacher", (req, res) => {
+  const ID = req.body.id;
+  const EMAIL = req.body.email;
+  const FIRST = req.body.first;
+  const MID = req.body.middle;
+  const LAST = req.body.last;
+  const PASS = req.body.password;
+  const PHONE = req.body.phone;
+
+  const sqlInsert =
+    "INSERT INTO Teaching_Staff (Middle_Name, Last_Name, First_Name, Employee_ID, Password, Email, Phone_No) VALUES (?, ?, ?, ?, ?, ?, ?);";
+
+  db.query(
+    sqlInsert,
+    [MID, LAST, FIRST, ID, PASS, EMAIL, PHONE],
+    (err, result) => {
+      if (err) res.status(404).send({ error: err });
+      else res.send(result);
+    }
+  );
+});
+
+app.post("/api/addAdmin", (req, res) => {
+  const ID = req.body.id;
+  const EMAIL = req.body.email;
+  const FIRST = req.body.first;
+  const MID = req.body.middle;
+  const LAST = req.body.last;
+  const PASS = req.body.password;
+  const PHONE = req.body.phone;
+
+  const sqlInsert =
+    "INSERT INTO Admin (Password, First_Name, Last_Name, Middle_Name, Admin_ID, Email, Phone_No) VALUES (?, ?, ?, ?, ?, ?, ?);";
+
+  db.query(
+    sqlInsert,
+    [PASS, FIRST, LAST, MID, ID, EMAIL, PHONE],
+    (err, result) => {
+      if (err) res.status(404).send({ error: err });
+      else res.send(result);
+    }
+  );
+});
+
+app.get("/api/getStudents1", (req, res) => {
+  const sqlSelect = "SELECT * FROM Student;";
+
+  db.query(sqlSelect, (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getStudents2", (req, res) => {
+  const FIRST = req.query.first;
+  const LAST = req.query.last;
+
+  const sqlSelect =
+    "SELECT * FROM Student WHERE First_Name = ? OR Last_Name = ?;";
+
+  db.query(sqlSelect, [FIRST, LAST], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getStudents3", (req, res) => {
+  const PERCENT = req.query.percent;
+
+  const sqlSelect =
+    "SELECT Student.Student_ID, Student.First_Name, Student.Last_Name, COUNT(Student_Att_Record.Status) AS Total_Classes, COUNT(CASE WHEN Student_Att_Record.Status = 'PRESENT' THEN 1 END) AS Present_Classes, (COUNT(CASE WHEN Student_Att_Record.Status = 'PRESENT' THEN 1 END) / COUNT(Student_Att_Record.Status)) * 100 AS Attendance_Percentage FROM Student INNER JOIN Enrollment ON Student.Student_ID = Enrollment.Student_ID INNER JOIN Course ON Enrollment.Course_ID = Course.Course_ID INNER JOIN Student_Att_Record ON Enrollment.Enroll_ID = Student_Att_Record.Enroll_ID GROUP BY Student.Student_ID HAVING Attendance_Percentage >= ? ORDER BY Attendance_Percentage DESC;";
+
+  db.query(sqlSelect, [PERCENT], (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getStudents4", (req, res) => {
+  const sqlSelect =
+    "SELECT DISTINCT s.* FROM Student s INNER JOIN Permission p ON s.Student_ID = p.Student_ID;";
+
+  db.query(sqlSelect, (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getStudents5", (req, res) => {
+  const sqlSelect =
+    "SELECT s.First_Name, s.Last_Name, s.Student_ID FROM Student s INNER JOIN Enrollment e ON s.Student_ID = e.Student_ID INNER JOIN Student_Att_Record sar ON e.Enroll_ID = sar.Enroll_ID WHERE sar.Status = 'ABSENTWOP';";
+
+  db.query(sqlSelect, (err, result) => {
+    if (result?.length) res.send(result);
+    else res.status(404).send({ error: err });
+  });
+});
+
+app.get("/api/getStudents6", (req, res) => {
+  const CID = req.query.cid;
+
+  const sqlSelect =
+    "SELECT s.Student_ID, s.First_Name, s.Last_Name, ROUND(AVG(CASE WHEN a.Status = 'PRESENT' THEN 1 ELSE 0 END) * 100, 2) AS Attendance_Percentage FROM Student s JOIN Enrollment e ON s.Student_ID = e.Student_ID JOIN Course c ON e.Course_ID = c.Course_ID LEFT JOIN Student_Att_Record a ON e.Enroll_ID = a.Enroll_ID WHERE c.Course_ID = ? GROUP BY s.Student_ID, s.First_Name, s.Last_Name;";
+
+  db.query(sqlSelect, [CID], (err, result) => {
     if (result?.length) res.send(result);
     else res.status(404).send({ error: err });
   });
