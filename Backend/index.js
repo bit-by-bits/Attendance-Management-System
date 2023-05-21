@@ -1,11 +1,14 @@
+// Import required modules
 const express = require("express");
 const bodyParser = require("body-parser");
 const mysql = require("mysql");
 const cors = require("cors");
 
+// Create an Express app
 const app = express();
 const port = 3001;
 
+// Create a MySQL database connection pool
 const db = mysql.createPool({
   host: "localhost",
   user: "root",
@@ -14,26 +17,36 @@ const db = mysql.createPool({
   timezone: "ist",
 });
 
-// Attempt to catch disconnects
+// Attempt to catch disconnects from the database
 db.on("connection", (connection) => {
   console.log("DB Connection established");
 
+  // Handle MySQL connection errors
   connection.on("error", (err) =>
     console.error(new Date(), " MySQL error ", err.code)
   );
 
+  // Handle MySQL connection close
   connection.on("close", (err) =>
     console.error(new Date(), " MySQL close ", err)
   );
 });
 
+// Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors());
+
+// Parse JSON request bodies
 app.use(express.json());
+
+// Parse URL-encoded request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Start the server and listen on the specified port
 app.listen(port, () => {
   console.log(`\nApp listening to Port: ${port}\n`);
 });
+
+// APIS follow:
 
 app.get("/api/initiate", (req, res) => {
   const sqlCreateDB = "CREATE DATABASE IF NOT EXISTS ams_db;";

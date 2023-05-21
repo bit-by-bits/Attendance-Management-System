@@ -101,7 +101,8 @@ const App = () => {
             },
           ]}
         >
-          <Select showSearch 
+          <Select
+            showSearch
             options={[
               { label: "Student", value: "student" },
               { label: "Teacher", value: "teacher" },
