@@ -1,12 +1,12 @@
 # Attendance-Management-System
 
-The Attendance Management System GUI is a web-based application that provides a user-friendly interface for interacting with the attendance management database. It utilizes the ReactJS and Antd component library for the frontend, Node.js and Express for the backend, and MySQL for the database.
+Attendance Management System is a web-based GUI application that provides a user-friendly interface for interacting with the management database. It utilizes the ReactJS and Antd component library for the frontend, Node.js and Express for the backend, and MySQL for the database.
 
 ## Technology Stack
 
 - Frontend: ReactJS and related Libraries
-- Backend: Node.js and Express
-- Database: MySQL db
+- Backend: Node.js and Express.js
+- Database: MySQL Workbench
 
 ## Installation
 
@@ -34,6 +34,11 @@ The frontend of the Attendance Management System GUI is built using ReactJS and 
 ## Backend
 
 The backend of the Attendance Management System GUI is developed using Node.js and Express. It handles the API endpoints, connects to the MySQL database, and performs the necessary operations for managing attendance records. The backend code can be found in the `Backend` directory of the project.
+
+## Contributions
+
+- [Shreyas Kumar](https://github.com/shreyas23sk)
+- [Prateek Kashyap](https://github.com/bit-by-bits)
 
 ## License
 
