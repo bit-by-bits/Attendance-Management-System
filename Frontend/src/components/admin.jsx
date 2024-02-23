@@ -145,14 +145,14 @@ const Admin = () => {
             .catch(err =>
               message.error(
                 err?.response?.data?.error?.sqlMessage ||
-                  "Something went wrong!"
-              )
-            )
+                  "Something went wrong!",
+              ),
+            ),
         )
         .catch(err =>
           message.error(
-            err?.response?.data?.error?.sqlMessage || "Something went wrong!"
-          )
+            err?.response?.data?.error?.sqlMessage || "Something went wrong!",
+          ),
         );
     } else {
       const URL = `${base}/add${
@@ -167,8 +167,8 @@ const Admin = () => {
         .then(res => message.success("User added successfully!"))
         .catch(err =>
           message.error(
-            err?.response?.data?.error?.sqlMessage || "Something went wrong!"
-          )
+            err?.response?.data?.error?.sqlMessage || "Something went wrong!",
+          ),
         );
     }
   };
@@ -195,7 +195,7 @@ const Admin = () => {
               " " +
               (student.Last_Name ?? ""),
             attendance: student.Status,
-          }))
+          })),
         );
       })
       .catch(err => {
@@ -231,14 +231,15 @@ const Admin = () => {
           .then(res => message.success("Attendance marked successfully!"))
           .catch(err =>
             message.error(
-              err?.response?.data?.error?.sqlMessage || "Attendance not marked!"
-            )
-          )
+              err?.response?.data?.error?.sqlMessage ||
+                "Attendance not marked!",
+            ),
+          ),
       )
       .catch(err =>
         message.error(
-          err?.response?.data?.error?.sqlMessage || "Attendance not marked!"
-        )
+          err?.response?.data?.error?.sqlMessage || "Attendance not marked!",
+        ),
       );
   };
 
@@ -309,15 +310,15 @@ const Admin = () => {
               .catch(err =>
                 message.error(
                   err?.response?.data?.error.sqlMessage ||
-                    "Could not update profile"
-                )
+                    "Could not update profile",
+                ),
               );
           })
           .catch(err =>
             message.error(
               err?.response?.data?.error.sqlMessage ||
-                "Could not update profile"
-            )
+                "Could not update profile",
+            ),
           );
       else
         axios({
@@ -331,8 +332,8 @@ const Admin = () => {
           .catch(err =>
             message.error(
               err?.response?.data?.error.sqlMessage ||
-                "Could not update profile"
-            )
+                "Could not update profile",
+            ),
           );
     } else message.error("Wrong ID entered");
   };
@@ -360,7 +361,7 @@ const Admin = () => {
               " " +
               (teacher.Last_Name ?? ""),
             attendance: teacher.Status,
-          }))
+          })),
         );
       })
       .catch(err => {
@@ -439,7 +440,7 @@ const Admin = () => {
                                     phone: item.Phone_No,
                                     house: item.House,
                                     city: item.City,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -537,7 +538,7 @@ const Admin = () => {
                                     phone: item.Phone_No,
                                     house: item.House,
                                     city: item.City,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -636,7 +637,7 @@ const Admin = () => {
                                       (item.Last_Name ?? ""),
                                     id: item.Student_ID,
                                     attendance: item.Attendance_Percentage,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -718,7 +719,7 @@ const Admin = () => {
                                     present: item.Present_Classes,
                                     total: item.Total_Classes,
                                     percent: item.Attendance_Percentage,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -812,7 +813,7 @@ const Admin = () => {
                                     phone: item.Phone_No,
                                     house: item.House,
                                     city: item.City,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -900,7 +901,7 @@ const Admin = () => {
                                     first: item.First_Name,
                                     last: item.Last_Name,
                                     id: item.Student_ID,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([

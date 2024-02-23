@@ -93,20 +93,20 @@ const Student = () => {
             course: e.Name,
             cid: e.Course_ID,
             teacher: e.Teacher,
-          }))
+          })),
         );
 
         setCourses(
           res.data.map(e => ({
             value: e.Course_ID,
             label: e.Name,
-          }))
+          })),
         );
       })
       .catch(err =>
         message.error(
-          err?.response?.data?.error.sqlMessage || "Could not fetch courses"
-        )
+          err?.response?.data?.error.sqlMessage || "Could not fetch courses",
+        ),
       );
   };
 
@@ -123,13 +123,13 @@ const Student = () => {
             course: e.Name,
             course_id: e.Course_ID,
             status: e.Status,
-          }))
+          })),
         );
       })
       .catch(err =>
         message.error(
-          err?.response?.data?.error.sqlMessage || "Could not fetch attendance"
-        )
+          err?.response?.data?.error.sqlMessage || "Could not fetch attendance",
+        ),
       );
   };
 
@@ -150,12 +150,12 @@ const Student = () => {
           password: res.data[1].Password,
           phone: res.data[1].Phone_No,
           sid: res.data[1].Student_ID,
-        })
+        }),
       )
       .catch(err =>
         message.error(
-          err?.response?.data?.error.sqlMessage || "Could not fetch profile"
-        )
+          err?.response?.data?.error.sqlMessage || "Could not fetch profile",
+        ),
       );
   };
 
@@ -178,14 +178,14 @@ const Student = () => {
             .catch(err =>
               message.error(
                 err?.response?.data?.error.sqlMessage ||
-                  "Could not update profile"
-              )
+                  "Could not update profile",
+              ),
             );
         })
         .catch(err =>
           message.error(
-            err?.response?.data?.error.sqlMessage || "Could not update profile"
-          )
+            err?.response?.data?.error.sqlMessage || "Could not update profile",
+          ),
         );
     } else message.error("Wrong Student ID");
   };
@@ -216,14 +216,14 @@ const Student = () => {
           .catch(err =>
             message.error(
               err?.response?.data?.error.sqlMessage ||
-                "Could not apply for leave"
-            )
-          )
+                "Could not apply for leave",
+            ),
+          ),
       )
       .catch(err =>
         message.error(
-          err?.response?.data?.error.sqlMessage || "Could not apply for leave"
-        )
+          err?.response?.data?.error.sqlMessage || "Could not apply for leave",
+        ),
       );
   };
 

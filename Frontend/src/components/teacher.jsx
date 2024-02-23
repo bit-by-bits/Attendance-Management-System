@@ -98,8 +98,8 @@ const Teacher = () => {
                 .catch(err =>
                   message.error(
                     err?.response?.data?.error?.sqlMessage ||
-                      "Could not accept application!"
-                  )
+                      "Could not accept application!",
+                  ),
                 );
             }}
           >
@@ -129,8 +129,8 @@ const Teacher = () => {
                 .catch(err =>
                   message.error(
                     err?.response?.data?.error?.sqlMessage ||
-                      "Could not reject application!"
-                  )
+                      "Could not reject application!",
+                  ),
                 );
             }}
           >
@@ -163,8 +163,8 @@ const Teacher = () => {
           res.data.map(course => ({
             label: course.Name,
             value: course.Course_ID,
-          }))
-        )
+          })),
+        ),
       )
       .catch(err => {
         message.error("No courses found");
@@ -176,7 +176,7 @@ const Teacher = () => {
     axios({
       method: "get",
       url: `${base}/getCourseStudents/?tid=${localStorage.getItem(
-        "id"
+        "id",
       )}&cid=${cid}`,
     }).then(res => {
       setStudents(
@@ -188,7 +188,7 @@ const Teacher = () => {
             " " +
             (student.Last_Name ?? ""),
           value: student.Student_ID,
-        }))
+        })),
       );
     });
   };
@@ -212,8 +212,8 @@ const Teacher = () => {
               (student.Last_Name ?? ""),
             date: student.Date.slice(0, 10),
             status: student.Status,
-          }))
-        )
+          })),
+        ),
       )
       .catch(err => {
         message.error("No applications found");
@@ -236,14 +236,14 @@ const Teacher = () => {
           .then(res => message.success("User added successfully!"))
           .catch(err =>
             message.error(
-              err?.response?.data?.error?.sqlMessage || "Something went wrong!"
-            )
-          )
+              err?.response?.data?.error?.sqlMessage || "Something went wrong!",
+            ),
+          ),
       )
       .catch(err =>
         message.error(
-          err?.response?.data?.error?.sqlMessage || "Something went wrong!"
-        )
+          err?.response?.data?.error?.sqlMessage || "Something went wrong!",
+        ),
       );
   };
 
@@ -269,7 +269,7 @@ const Teacher = () => {
               " " +
               (student.Last_Name ?? ""),
             attendance: student.Status,
-          }))
+          })),
         );
       })
       .catch(err => {
@@ -305,14 +305,15 @@ const Teacher = () => {
           .then(res => message.success("Attendance marked successfully!"))
           .catch(err =>
             message.error(
-              err?.response?.data?.error?.sqlMessage || "Attendance not marked!"
-            )
-          )
+              err?.response?.data?.error?.sqlMessage ||
+                "Attendance not marked!",
+            ),
+          ),
       )
       .catch(err =>
         message.error(
-          err?.response?.data?.error?.sqlMessage || "Attendance not marked!"
-        )
+          err?.response?.data?.error?.sqlMessage || "Attendance not marked!",
+        ),
       );
   };
 
@@ -384,7 +385,7 @@ const Teacher = () => {
                                     phone: item.Phone_No,
                                     house: item.House,
                                     city: item.City,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -482,7 +483,7 @@ const Teacher = () => {
                                     phone: item.Phone_No,
                                     house: item.House,
                                     city: item.City,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -581,7 +582,7 @@ const Teacher = () => {
                                       (item.Last_Name ?? ""),
                                     id: item.Student_ID,
                                     attendance: item.Attendance_Percentage,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -663,7 +664,7 @@ const Teacher = () => {
                                     present: item.Present_Classes,
                                     total: item.Total_Classes,
                                     percent: item.Attendance_Percentage,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -757,7 +758,7 @@ const Teacher = () => {
                                     phone: item.Phone_No,
                                     house: item.House,
                                     city: item.City,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
@@ -845,7 +846,7 @@ const Teacher = () => {
                                     first: item.First_Name,
                                     last: item.Last_Name,
                                     id: item.Student_ID,
-                                  }))
+                                  })),
                                 );
 
                                 setColumns2([
